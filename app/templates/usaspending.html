@@ -3,224 +3,1025 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USAspending Dashboard</title>
-    <!-- Tailwind CSS via CDN -->
+    <title>OpenDOGE - Government Spending Dashboard</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for visualizations -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Money formatting library -->
+    <!-- Money formatting -->
     <script src="https://cdn.jsdelivr.net/npm/accounting-js"></script>
+    <!-- DataTables -->
+    <link href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    
+    <!-- Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <div class="text-center mb-8">
-            <h1 class="text-5xl font-bold text-blue-800">OpenDOGE</h1>
-            <p class="text-xl text-gray-600 mt-2">Open Department of Government Efficiency</p>
-            <p class="text-md text-gray-500 mt-1">Transparent Government Spending Analysis</p>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <h1 class="text-4xl font-bold">OpenDOGE</h1>
+            <p class="text-xl opacity-90">Open Department of Government Efficiency</p>
         </div>
+    </header>
 
-        <!-- Search Section -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Search Federal Awards</h2>
-            <div class="flex gap-4">
-                <input type="text" id="searchKeyword" placeholder="Search keywords (e.g., construction, research, technology)..." 
-                       class="flex-1 p-2 border rounded">
-                <button onclick="searchAwards()" 
-                        class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
-                    Search
-                </button>
+    <!-- National Debt and Federal Spending Metrics -->
+    <div class="container mx-auto px-4 py-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <!-- National Debt Clock -->
+            <div class="bg-white rounded-lg shadow-md p-6 transform hover:scale-105 transition-transform duration-200">
+                <h3 class="text-lg font-semibold text-gray-700">National Debt</h3>
+                <p class="text-3xl font-bold text-red-600 mt-2" id="nationalDebt">Loading...</p>
+                <div class="flex justify-between mt-2">
+                    <span class="text-sm text-gray-500">Per Person:</span>
+                    <span class="text-sm font-medium" id="debtPerPerson">Loading...</span>
+                </div>
+                <div class="text-xs text-gray-400 mt-2">Updates in real-time</div>
             </div>
-            <div id="searchResults" class="mt-4"></div>
-        </div>
-
-        <!-- Recent Awards Section -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Recent Federal Contract Awards</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="recentAwards"></div>
-        </div>
-
-        <!-- Federal Accounts Chart -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Top Federal Accounts by Budget</h2>
-            <canvas id="accountsChart"></canvas>
-        </div>
-
-        <!-- State Spending Section -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-2xl font-semibold mb-4">State-Level Federal Spending</h2>
-            <div class="flex gap-4 mb-4">
-                <select id="stateSelect" class="p-2 border rounded">
-                    <option value="CA">California</option>
-                    <option value="NY">New York</option>
-                    <option value="TX">Texas</option>
-                    <option value="FL">Florida</option>
-                    <option value="IL">Illinois</option>
-                    <option value="PA">Pennsylvania</option>
-                    <option value="OH">Ohio</option>
-                    <option value="GA">Georgia</option>
-                    <option value="NC">North Carolina</option>
-                    <option value="MI">Michigan</option>
-                </select>
-                <button onclick="loadStateData()" 
-                        class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600">
-                    Load Data
-                </button>
+            
+            <!-- Federal Spending Clock -->
+            <div class="bg-white rounded-lg shadow-md p-6 transform hover:scale-105 transition-transform duration-200">
+                <h3 class="text-lg font-semibold text-gray-700">Federal Spending FY2024</h3>
+                <p class="text-3xl font-bold text-blue-600 mt-2" id="federalSpending">Loading...</p>
+                <div class="flex justify-between mt-2">
+                    <span class="text-sm text-gray-500">Per Second:</span>
+                    <span class="text-sm font-medium" id="spendingPerSecond">Loading...</span>
+                </div>
+                <div class="text-xs text-gray-400 mt-2">Updates in real-time</div>
             </div>
-            <div id="stateData"></div>
+            
+            <!-- Federal Revenue -->
+            <div class="bg-white rounded-lg shadow-md p-6 transform hover:scale-105 transition-transform duration-200">
+                <h3 class="text-lg font-semibold text-gray-700">Federal Revenue FY2024</h3>
+                <p class="text-3xl font-bold text-green-600 mt-2" id="federalRevenue">Loading...</p>
+                <div class="flex justify-between mt-2">
+                    <span class="text-sm text-gray-500">Deficit:</span>
+                    <span class="text-sm font-medium text-red-500" id="deficit">Loading...</span>
+                </div>
+                <div class="text-xs text-gray-400 mt-2">Updates in real-time</div>
+            </div>
         </div>
 
-        <!-- Footer -->
-        <div class="text-center mt-8 text-gray-500 text-sm">
-            <p>Data provided by USAspending.gov API</p>
-            <p class="mt-1">OpenDOGE - Making Government Spending Transparent</p>
+        <!-- Debt Trend Chart -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">National Debt Trend (30 Days)</h3>
+            <div style="height: 300px;">
+                <canvas id="debtTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="container mx-auto px-4 py-6">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 transform hover:scale-105 transition-transform duration-200">
+                <h3 class="text-lg font-semibold text-gray-700">Total Contract Spending</h3>
+                <p class="text-3xl font-bold text-blue-600 mt-2" id="totalSpending">Loading...</p>
+                <p class="text-sm text-gray-500 mt-1">Last 30 days</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 transform hover:scale-105 transition-transform duration-200">
+                <h3 class="text-lg font-semibold text-gray-700">Average Award Amount</h3>
+                <p class="text-3xl font-bold text-green-600 mt-2" id="avgAward">Loading...</p>
+                <p class="text-sm text-gray-500 mt-1">Last 30 days</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 transform hover:scale-105 transition-transform duration-200">
+                <h3 class="text-lg font-semibold text-gray-700">Total Contracts</h3>
+                <p class="text-3xl font-bold text-purple-600 mt-2" id="contractCount">Loading...</p>
+                <p class="text-sm text-gray-500 mt-1">Last 30 days</p>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Spending by Agency Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700">Top Agencies by Spending</h3>
+                    <div class="text-sm text-gray-500">Click bars for details</div>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="agencyChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Contract Categories Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700">Contract Categories</h3>
+                    <div class="text-sm text-gray-500">Click segments for details</div>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Federal Contracts Section -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-700">Recent Federal Contracts</h2>
+                <div class="flex gap-2">
+                    <button onclick="exportData('csv')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm">Export CSV</button>
+                    <button onclick="exportData('excel')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm">Export Excel</button>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="mb-6">
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- Smart Search Input -->
+                    <div class="relative">
+                        <div class="flex gap-2">
+                            <div class="relative flex-grow">
+                                <input type="text" id="smartSearch" 
+                                       placeholder="Try: 'Find defense contracts over $10M from the last 30 days in California'" 
+                                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 text-lg">
+                                <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <span id="searchStatus" class="text-sm"></span>
+                                </div>
+                            </div>
+                            <button onclick="performSmartSearch()" 
+                                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0 flex items-center gap-2">
+                                <i class="fas fa-search"></i>
+                                <span>Search</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Search Suggestions -->
+                        <div id="searchSuggestions" class="mt-3 space-y-2">
+                            <!-- Suggestions will be populated here -->
+                        </div>
+                        
+                        <!-- Active Filters -->
+                        <div id="activeFilters" class="mt-3 flex flex-wrap gap-2">
+                            <!-- Active filters will be populated here -->
+                        </div>
+
+                        <!-- Search Help -->
+                        <div class="mt-2 text-sm text-gray-500">
+                            <button onclick="toggleSearchHelp()" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-question-circle mr-1"></i>Search Tips
+                            </button>
+                            <div id="searchHelp" class="hidden mt-2 bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold mb-2">Search Examples:</h4>
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li>Search by amount: "contracts over $10 million"</li>
+                                    <li>Search by date: "contracts from last 90 days"</li>
+                                    <li>Search by agency: "DOD contracts for research"</li>
+                                    <li>Search by location: "construction projects in Texas"</li>
+                                    <li>Search by category: "technology services contracts"</li>
+                                    <li>Combine filters: "DOD research contracts over $5M in California from last month"</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Search Toggle -->
+                    <div class="text-right">
+                        <button onclick="toggleAdvancedSearch()" 
+                                class="text-blue-600 hover:text-blue-800 text-sm">
+                            Advanced Search Options
+                        </button>
+                    </div>
+                    
+                    <!-- Advanced Search (Hidden by default) -->
+                    <div id="advancedSearch" class="hidden bg-gray-50 p-4 rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Agency</label>
+                                <select id="agencyFilter" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="">All Agencies</option>
+                                    <option value="DOD">Department of Defense</option>
+                                    <option value="HHS">Health and Human Services</option>
+                                    <option value="DOE">Department of Energy</option>
+                                    <option value="NASA">NASA</option>
+                                    <option value="DHS">Department of Homeland Security</option>
+                                    <option value="VA">Veterans Affairs</option>
+                                    <option value="DOT">Department of Transportation</option>
+                                    <option value="DOI">Department of Interior</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                                <select id="amountFilter" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="all">All Amounts</option>
+                                    <option value="1m+" selected>$1M+</option>
+                                    <option value="10m+">$10M+</option>
+                                    <option value="100m+">$100M+</option>
+                                    <option value="1b+">$1B+</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Time Period</label>
+                                <select id="daysFilter" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <option value="30">Last 30 Days</option>
+                                    <option value="90">Last 90 Days</option>
+                                    <option value="180">Last 180 Days</option>
+                                    <option value="365">Last Year</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contracts Table -->
+            <div class="overflow-x-auto">
+                <table id="contractsTable" class="w-full">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Recipient</th>
+                            <th>Agency</th>
+                            <th>Award Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contractsBody">
+                        <!-- Contracts will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        // Utility function for formatting money
+        // Format currency
         function formatMoney(amount) {
             return accounting.formatMoney(amount, "$", 2);
         }
 
-        // Load recent awards
-        async function loadRecentAwards() {
-            const response = await fetch('/api/v1/usaspending/awards/recent');
-            const data = await response.json();
-            
-            const container = document.getElementById('recentAwards');
-            container.innerHTML = '';
-
-            data.results.forEach(award => {
-                const card = document.createElement('div');
-                card.className = 'bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow';
-                card.innerHTML = `
-                    <h3 class="font-semibold text-lg mb-2 text-blue-800">${award.Description || 'No description'}</h3>
-                    <p class="text-green-600 font-bold text-xl mb-2">${formatMoney(award['Award Amount'])}</p>
-                    <p class="text-gray-700 font-medium">${award['Recipient Name']}</p>
-                    <p class="text-gray-600">${award['Awarding Agency']}</p>
-                    <div class="mt-2 text-sm text-gray-500">
-                        <span class="inline-block bg-blue-100 rounded px-2 py-1">
-                            ${award['Start Date']} to ${award['End Date']}
-                        </span>
-                    </div>
-                `;
-                container.appendChild(card);
+        // Format date
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
             });
         }
 
-        // Load federal accounts chart
-        async function loadFederalAccounts() {
-            const response = await fetch('/api/v1/usaspending/federal-accounts');
-            const data = await response.json();
+        // Initialize DataTable
+        let contractsTable;
+
+        // Load initial data immediately when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Page loaded, fetching initial data...');
+            showLoadingState();
+            await loadData();
             
-            const ctx = document.getElementById('accountsChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.data.map(account => account.account_name.split(',')[0]),
-                    datasets: [{
-                        label: 'Budgetary Resources',
-                        data: data.data.map(account => account.budgetary_resources),
-                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        title: {
-                            display: true,
-                            text: 'Federal Account Budgetary Resources'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return formatMoney(value);
-                                }
-                            }
-                        }
+            // Initialize fiscal metrics and debt trend
+            await updateFiscalMetrics();
+            await initializeDebtTrendChart();
+            
+            // Update fiscal metrics every second
+            setInterval(updateFiscalMetrics, 1000);
+        });
+
+        // Show loading state
+        function showLoadingState() {
+            document.getElementById('totalSpending').textContent = 'Loading...';
+            document.getElementById('avgAward').textContent = 'Loading...';
+            document.getElementById('contractCount').textContent = 'Loading...';
+            
+            // Add loading overlay to charts
+            document.querySelectorAll('.chart-container').forEach(container => {
+                container.classList.add('opacity-50');
+            });
+            
+            // Disable search button
+            const searchButton = document.querySelector('button[onclick="searchContracts()"]');
+            if (searchButton) {
+                searchButton.disabled = true;
+                searchButton.classList.add('opacity-50');
+            }
+        }
+
+        // Hide loading state
+        function hideLoadingState() {
+            // Enable search button
+            const searchButton = document.querySelector('button[onclick="searchContracts()"]');
+            if (searchButton) {
+                searchButton.disabled = false;
+                searchButton.classList.remove('opacity-50');
+            }
+            
+            // Remove loading overlay from charts
+            document.querySelectorAll('.chart-container').forEach(container => {
+                container.classList.remove('opacity-50');
+            });
+        }
+
+        // Load data
+        async function loadData() {
+            try {
+                showLoadingState();
+                
+                // Default to showing largest contracts from the last 30 days
+                const defaultParams = new URLSearchParams({
+                    limit: '50',
+                    days: '30',
+                    min_amount: '1000000' // $1M minimum
+                });
+                
+                const response = await fetch(`/api/v1/usaspending/awards/recent?${defaultParams}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data.results && data.results.length > 0) {
+                    console.log('Loaded initial data:', data.results.length, 'contracts');
+                    updateDashboard(data);
+                    updateContractsTable(data.results);
+                    updateCharts(data.results);
+                } else {
+                    console.log('No initial data found:', data);
+                    if (data.error) {
+                        console.error('API Error:', data.error);
                     }
+                    clearDashboard();
+                }
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+                clearDashboard();
+            } finally {
+                hideLoadingState();
+            }
+        }
+
+        // Smart Search Functions
+        async function performSmartSearch() {
+            const query = document.getElementById('smartSearch').value;
+            if (!query) return;
+            
+            showLoadingState();
+            updateSearchStatus('Processing...');
+            
+            try {
+                const response = await fetch('/api/v1/usaspending/smart-search?' + new URLSearchParams({
+                    query: query,
+                    include_suggestions: 'true'
+                }), {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update active filters with better formatting
+                updateActiveFilters(data.search_params);
+                
+                // Update search suggestions with categories
+                updateSearchSuggestions(data.suggestions);
+                
+                // Update the UI with results
+                if (data.results && data.results.results) {
+                    updateSearchStatus(`Found ${data.results.results.length} results`);
+                    updateDashboard(data.results);
+                    updateContractsTable(data.results.results);
+                    updateCharts(data.results.results);
+                } else {
+                    updateSearchStatus('No results found');
+                    clearDashboard();
+                }
+                
+            } catch (error) {
+                console.error('Error performing smart search:', error);
+                updateSearchStatus('Error performing search');
+                clearDashboard();
+            } finally {
+                hideLoadingState();
+            }
+        }
+
+        function updateSearchStatus(message) {
+            const statusElement = document.getElementById('searchStatus');
+            statusElement.textContent = message;
+        }
+
+        function updateActiveFilters(params) {
+            const container = document.getElementById('activeFilters');
+            container.innerHTML = '';
+            
+            if (!params) return;
+            
+            // Define pretty names for parameters
+            const prettyNames = {
+                keyword: 'Keyword',
+                agency: 'Agency',
+                min_amount: 'Min Amount',
+                max_amount: 'Max Amount',
+                days: 'Time Period',
+                category: 'Category',
+                state: 'State',
+                sort_by: 'Sort By'
+            };
+            
+            Object.entries(params).forEach(([key, value]) => {
+                if (value) {
+                    const filter = document.createElement('div');
+                    filter.className = 'px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm flex items-center gap-2';
+                    
+                    // Format the value based on the parameter type
+                    let displayValue = value;
+                    if (key === 'days') {
+                        displayValue = `Last ${value} days`;
+                    } else if (key.includes('amount')) {
+                        displayValue = formatMoney(value);
+                    }
+                    
+                    filter.innerHTML = `
+                        <span class="font-medium">${prettyNames[key] || key}:</span>
+                        <span>${displayValue}</span>
+                        <button onclick="removeFilter('${key}')" class="ml-1 text-blue-600 hover:text-blue-800 focus:outline-none">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    container.appendChild(filter);
                 }
             });
         }
 
-        // Load state data
-        async function loadStateData() {
-            const stateCode = document.getElementById('stateSelect').value;
-            const response = await fetch(`/api/v1/usaspending/state/${stateCode}`);
-            const data = await response.json();
-            
-            const container = document.getElementById('stateData');
-            if (data.results && data.results.length > 0) {
-                const result = data.results[0];
-                container.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-gray-50 p-6 rounded-lg hover:shadow-md transition-shadow">
-                            <h3 class="font-semibold text-lg text-gray-700">Total Federal Spending</h3>
-                            <p class="text-3xl text-green-600 font-bold mt-2">${formatMoney(result.aggregated_amount)}</p>
-                        </div>
-                        <div class="bg-gray-50 p-6 rounded-lg hover:shadow-md transition-shadow">
-                            <h3 class="font-semibold text-lg text-gray-700">Per Capita Spending</h3>
-                            <p class="text-3xl text-blue-600 font-bold mt-2">${formatMoney(result.per_capita)}</p>
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-500 mt-4 text-center">
-                        Data represents federal spending in ${document.getElementById('stateSelect').options[document.getElementById('stateSelect').selectedIndex].text}
-                    </p>
-                `;
-            } else {
-                container.innerHTML = '<p class="text-gray-500 text-center">No data available for this state.</p>';
-            }
-        }
-
-        // Search awards
-        async function searchAwards() {
-            const keyword = document.getElementById('searchKeyword').value;
-            if (!keyword) return;
-
-            const response = await fetch(`/api/v1/usaspending/search?keyword=${encodeURIComponent(keyword)}`);
-            const data = await response.json();
-            
-            const container = document.getElementById('searchResults');
+        function updateSearchSuggestions(suggestions) {
+            const container = document.getElementById('searchSuggestions');
             container.innerHTML = '';
-
-            if (data.results && data.results.length > 0) {
-                data.results.forEach(award => {
-                    const div = document.createElement('div');
-                    div.className = 'bg-gray-50 p-4 rounded-lg mb-4 hover:shadow-md transition-shadow';
-                    div.innerHTML = `
-                        <h3 class="font-semibold text-lg text-blue-800">${award.Description || 'No description'}</h3>
-                        <p class="text-green-600 font-bold text-xl mt-2">${formatMoney(award['Award Amount'])}</p>
-                        <p class="text-gray-700 font-medium mt-2">${award['Recipient Name']}</p>
-                        <p class="text-gray-600">${award['Awarding Agency']}</p>
-                    `;
-                    container.appendChild(div);
-                });
-            } else {
-                container.innerHTML = '<p class="text-gray-500 text-center">No results found. Try different keywords.</p>';
-            }
+            
+            if (!suggestions || !suggestions.length) return;
+            
+            // Group suggestions by category
+            const groupedSuggestions = suggestions.reduce((acc, suggestion) => {
+                if (!acc[suggestion.category]) {
+                    acc[suggestion.category] = [];
+                }
+                acc[suggestion.category].push(suggestion);
+                return acc;
+            }, {});
+            
+            // Create suggestion elements by category
+            Object.entries(groupedSuggestions).forEach(([category, categorySuggestions]) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'mb-3';
+                
+                categoryDiv.innerHTML = `
+                    <div class="text-sm font-medium text-gray-700 mb-1">${category}:</div>
+                    <div class="flex flex-wrap gap-2">
+                        ${categorySuggestions.map(suggestion => `
+                            <button onclick="applySuggestion('${suggestion.query}')"
+                                    class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm transition-colors">
+                                ${suggestion.text}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+                
+                container.appendChild(categoryDiv);
+            });
         }
 
-        // Initialize the dashboard
-        window.onload = function() {
-            loadRecentAwards();
-            loadFederalAccounts();
-            loadStateData();
-        };
+        function applySuggestion(query) {
+            document.getElementById('smartSearch').value = query;
+            performSmartSearch();
+        }
 
-        // Add enter key support for search
-        document.getElementById('searchKeyword').addEventListener('keypress', function(e) {
+        function toggleSearchHelp() {
+            const helpElement = document.getElementById('searchHelp');
+            helpElement.classList.toggle('hidden');
+        }
+
+        function removeFilter(key) {
+            // Clear the corresponding filter in the advanced search section
+            switch(key) {
+                case 'agency':
+                    document.getElementById('agencyFilter').value = '';
+                    break;
+                case 'min_amount':
+                    document.getElementById('amountFilter').value = 'all';
+                    break;
+                case 'days':
+                    document.getElementById('daysFilter').value = '30';
+                    break;
+            }
+            performSmartSearch();
+        }
+
+        function toggleAdvancedSearch() {
+            const advancedSearch = document.getElementById('advancedSearch');
+            advancedSearch.classList.toggle('hidden');
+        }
+
+        // Add event listener for Enter key in smart search
+        document.getElementById('smartSearch').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                searchAwards();
+                performSmartSearch();
             }
         });
+
+        // Clear dashboard when no results or error
+        function clearDashboard() {
+            // Clear metrics
+            document.getElementById('totalSpending').textContent = '$0.00';
+            document.getElementById('avgAward').textContent = '$0.00';
+            document.getElementById('contractCount').textContent = '0';
+            
+            // Clear table
+            if (contractsTable) {
+                contractsTable.clear().draw();
+            }
+            
+            // Clear charts
+            if (window.agencyChart) {
+                window.agencyChart.destroy();
+            }
+            if (window.categoryChart) {
+                window.categoryChart.destroy();
+            }
+            
+            // Initialize empty charts
+            updateCharts([]);
+        }
+
+        // Update dashboard metrics
+        function updateDashboard(data) {
+            if (!data.results) return;
+
+            // Calculate metrics
+            const total = data.results.reduce((sum, contract) => sum + (parseFloat(contract['Award Amount']) || 0), 0);
+            const avg = total / data.results.length;
+            const count = data.results.length;
+
+            // Update the metrics with animation
+            animateValue('totalSpending', total, formatMoney);
+            animateValue('avgAward', avg, formatMoney);
+            animateValue('contractCount', count, (val) => Math.round(val).toLocaleString());
+            
+            // Update charts
+            updateCharts(data.results);
+        }
+
+        // Animate value changes with smooth counting
+        function animateValue(elementId, targetValue, formatter, duration = 1000) {
+            const element = document.getElementById(elementId);
+            const start = parseFloat(element.textContent.replace(/[^0-9.-]+/g, "")) || 0;
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Use easeOutQuad for smooth animation
+                const easeOutQuad = progress * (2 - progress);
+                const current = start + (targetValue - start) * easeOutQuad;
+                
+                element.textContent = formatter(current);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    element.textContent = formatter(targetValue);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        // Update contracts table
+        function updateContractsTable(contracts) {
+            if (!contracts || !contracts.length) {
+                if (contractsTable) {
+                    contractsTable.clear().draw();
+                }
+                return;
+            }
+
+            if (contractsTable) {
+                contractsTable.destroy();
+            }
+
+            console.log('Updating table with', contracts.length, 'contracts');
+
+            contractsTable = $('#contractsTable').DataTable({
+                data: contracts,
+                columns: [
+                    { 
+                        data: 'Description',
+                        render: (data, type, row) => {
+                            if (type === 'display') {
+                                return `<a href="/contract?id=${row['Award ID']}" 
+                                          class="text-blue-600 hover:text-blue-800 hover:underline">
+                                          ${data || 'No description'}
+                                       </a>`;
+                            }
+                            return data || 'No description';
+                        }
+                    },
+                    { 
+                        data: 'Award Amount',
+                        render: (data) => formatMoney(parseFloat(data) || 0)
+                    },
+                    { 
+                        data: 'Recipient Name',
+                        render: (data, type, row) => {
+                            if (type === 'display') {
+                                return `<a href="/contract?id=${row['Award ID']}&tab=recipient" 
+                                          class="text-blue-600 hover:text-blue-800 hover:underline">
+                                          ${data || 'Unknown'}
+                                       </a>`;
+                            }
+                            return data || 'Unknown';
+                        }
+                    },
+                    { 
+                        data: 'Awarding Agency',
+                        render: (data, type, row) => {
+                            if (type === 'display') {
+                                return `<a href="/contract?id=${row['Award ID']}&tab=agency" 
+                                          class="text-blue-600 hover:text-blue-800 hover:underline">
+                                          ${data || 'Unknown'}
+                                       </a>`;
+                            }
+                            return data || 'Unknown';
+                        }
+                    },
+                    { 
+                        data: 'Start Date',
+                        render: (data) => data ? formatDate(data) : 'N/A'
+                    }
+                ],
+                order: [[4, 'desc']],
+                pageLength: 10,
+                responsive: true,
+                language: {
+                    emptyTable: "No contracts found",
+                    zeroRecords: "No matching contracts found"
+                },
+                dom: '<"flex justify-between items-center"f>rt<"flex justify-between"ip>',
+                drawCallback: function() {
+                    // Re-apply Tailwind classes to pagination
+                    $('.dataTables_paginate').addClass('space-x-2');
+                    $('.paginate_button').addClass('px-3 py-1 rounded hover:bg-gray-100');
+                    $('.paginate_button.current').addClass('bg-blue-600 text-white hover:bg-blue-700');
+                }
+            });
+        }
+
+        // Process agency data for chart
+        function processAgencyData(contracts) {
+            const agencySpending = {};
+            let totalSpending = 0;
+            
+            // Calculate total spending by agency
+            contracts.forEach(contract => {
+                const agency = contract['Awarding Agency'] || 'Unknown Agency';
+                const amount = parseFloat(contract['Award Amount']) || 0;
+                
+                if (!agencySpending[agency]) {
+                    agencySpending[agency] = 0;
+                }
+                agencySpending[agency] += amount;
+                totalSpending += amount;
+            });
+            
+            // Sort agencies by spending and get top 5
+            const sortedAgencies = Object.entries(agencySpending)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5);
+            
+            return {
+                labels: sortedAgencies.map(([agency]) => agency),
+                values: sortedAgencies.map(([,amount]) => amount)
+            };
+        }
+
+        // Process category data for chart
+        function processCategoryData(contracts) {
+            const categories = {
+                'Construction': 0,
+                'Research': 0,
+                'Services': 0,
+                'Equipment': 0,
+                'Other': 0
+            };
+            
+            contracts.forEach(contract => {
+                const description = (contract['Description'] || '').toLowerCase();
+                const amount = parseFloat(contract['Award Amount']) || 0;
+                
+                if (description.includes('construction') || description.includes('build')) {
+                    categories['Construction'] += amount;
+                } else if (description.includes('research') || description.includes('study')) {
+                    categories['Research'] += amount;
+                } else if (description.includes('service') || description.includes('support')) {
+                    categories['Services'] += amount;
+                } else if (description.includes('equipment') || description.includes('supplies')) {
+                    categories['Equipment'] += amount;
+                } else {
+                    categories['Other'] += amount;
+                }
+            });
+            
+            const sortedCategories = Object.entries(categories)
+                .sort(([,a], [,b]) => b - a);
+            
+            return {
+                labels: sortedCategories.map(([category]) => category),
+                values: sortedCategories.map(([,amount]) => amount)
+            };
+        }
+
+        // Update charts with contract data
+        function updateCharts(contracts) {
+            if (!contracts || contracts.length === 0) {
+                console.log('No data available for charts');
+                return;
+            }
+            
+            try {
+                console.log('Updating charts with', contracts.length, 'contracts');
+                
+                // Process data for agency chart
+                const agencyData = processAgencyData(contracts);
+                console.log('Agency data:', agencyData);
+                
+                // Update agency spending chart
+                if (window.agencyChart) {
+                    window.agencyChart.destroy();
+                }
+                
+                const agencyCtx = document.getElementById('agencyChart').getContext('2d');
+                window.agencyChart = new Chart(agencyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: agencyData.labels,
+                        datasets: [{
+                            label: 'Spending by Agency',
+                            data: agencyData.values,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatMoney(value);
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return formatMoney(context.raw);
+                                    }
+                                }
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        onClick: function(event, elements) {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const agency = agencyData.labels[index];
+                                document.getElementById('smartSearch').value = `agency:${agency}`;
+                                performSmartSearch();
+                            }
+                        }
+                    }
+                });
+                
+                // Process data for category chart
+                const categoryData = processCategoryData(contracts);
+                console.log('Category data:', categoryData);
+                
+                // Update category spending chart
+                if (window.categoryChart) {
+                    window.categoryChart.destroy();
+                }
+                
+                const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+                window.categoryChart = new Chart(categoryCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: categoryData.labels,
+                        datasets: [{
+                            data: categoryData.values,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(153, 102, 255, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.raw;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${context.label}: ${formatMoney(value)} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        onClick: function(event, elements) {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const category = categoryData.labels[index];
+                                document.getElementById('smartSearch').value = category.toLowerCase();
+                                performSmartSearch();
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error updating charts:', error);
+            }
+        }
+
+        // Export data function
+        function exportData(type) {
+            if (!contractsTable) return;
+            
+            const data = contractsTable.data().toArray();
+            if (type === 'csv') {
+                const csv = Papa.unparse(data);
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `federal-contracts-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+            } else if (type === 'excel') {
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Contracts');
+                XLSX.writeFile(workbook, `federal-contracts-${new Date().toISOString().split('T')[0]}.xlsx`);
+            }
+        }
+
+        // Constants for fiscal metrics (2024 estimates)
+        const FISCAL_YEAR_SECONDS = 31536000; // 365 days
+        const ESTIMATED_SPENDING_2024 = 6896000000000; // $6.896 trillion (FY2024 estimate)
+        const ESTIMATED_REVENUE_2024 = 4966000000000; // $4.966 trillion (FY2024 estimate)
+        const ESTIMATED_DEFICIT_2024 = ESTIMATED_SPENDING_2024 - ESTIMATED_REVENUE_2024;
+        const US_POPULATION = 335000000; // Approximate US population
+
+        // Update fiscal metrics with real Treasury data
+        async function updateFiscalMetrics() {
+            try {
+                // Fetch current debt data
+                const response = await fetch('/api/v1/treasury/debt/current');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error fetching debt data:', data.error);
+                    return;
+                }
+
+                // Update debt metrics
+                const totalDebt = data.total_debt;
+                const debtPerPerson = totalDebt / US_POPULATION;
+                
+                // Estimate daily increase based on yearly deficit
+                const YEARLY_DEFICIT = ESTIMATED_SPENDING_2024 - ESTIMATED_REVENUE_2024;
+                const DAILY_INCREASE = YEARLY_DEFICIT / 365;
+                const DEBT_INCREASE_PER_SECOND = DAILY_INCREASE / 86400;
+                
+                // Calculate current spending and revenue
+                const now = new Date();
+                const fiscalYearStart = new Date('2023-10-01');
+                const secondsElapsed = (now - fiscalYearStart) / 1000;
+                const yearProgress = secondsElapsed / FISCAL_YEAR_SECONDS;
+
+                const currentSpending = ESTIMATED_SPENDING_2024 * yearProgress;
+                const currentRevenue = ESTIMATED_REVENUE_2024 * yearProgress;
+                const spendingPerSecond = ESTIMATED_SPENDING_2024 / FISCAL_YEAR_SECONDS;
+                
+                // Update with animations
+                animateValue('nationalDebt', totalDebt, formatMoney, 500);
+                animateValue('debtPerPerson', debtPerPerson, formatMoney, 500);
+                animateValue('federalSpending', currentSpending, formatMoney, 500);
+                animateValue('spendingPerSecond', spendingPerSecond, (val) => formatMoney(val) + '/sec', 500);
+                animateValue('federalRevenue', currentRevenue, formatMoney, 500);
+                animateValue('deficit', currentSpending - currentRevenue, formatMoney, 500);
+                
+                // Add debt increase animation
+                let lastUpdate = Date.now();
+                const debtElement = document.getElementById('nationalDebt');
+                const initialDebt = totalDebt;
+                
+                function updateDebtClock() {
+                    const now = Date.now();
+                    const elapsed = (now - lastUpdate) / 1000;
+                    const increase = DEBT_INCREASE_PER_SECOND * elapsed;
+                    const currentDebt = initialDebt + increase;
+                    
+                    debtElement.textContent = formatMoney(currentDebt);
+                    lastUpdate = now;
+                    
+                    requestAnimationFrame(updateDebtClock);
+                }
+                
+                requestAnimationFrame(updateDebtClock);
+                
+            } catch (error) {
+                console.error('Error updating fiscal metrics:', error);
+            }
+        }
+
+        // Add debt trend chart
+        async function initializeDebtTrendChart() {
+            try {
+                const response = await fetch('/api/v1/treasury/debt/historical?days=30');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Error fetching historical debt data:', data.error);
+                    return;
+                }
+
+                // Sort data by date
+                const sortedData = data.data.sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                // Create debt trend chart
+                const ctx = document.getElementById('debtTrendChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: sortedData.map(d => new Date(d.date).toLocaleDateString()),
+                        datasets: [{
+                            label: 'Total National Debt',
+                            data: sortedData.map(d => d.total_debt),
+                            borderColor: 'rgb(255, 99, 132)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    callback: function(value) {
+                                        return formatMoney(value);
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return formatMoney(context.raw);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error initializing debt trend chart:', error);
+            }
+        }
     </script>
 </body>
 </html> 

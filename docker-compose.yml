@@ -17,14 +17,14 @@ services:
       timeout: 5s
       retries: 5
 
-  mongodb:
-    image: mongo:latest
+  redis:
+    image: redis:alpine
     ports:
-      - "27017:27017"
+      - "6379:6379"
     volumes:
-      - mongodb_data:/data/db
+      - redis_data:/data
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,21 +43,19 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-opendoge123}
       - POSTGRES_DB=${POSTGRES_DB:-opendoge}
       - POSTGRES_PORT=5432
-      - MONGODB_URL=mongodb://mongodb:27017
-      - MONGODB_DB=${MONGODB_DB:-opendoge}
-      - SAM_API_KEY=${SAM_API_KEY:-}
+      - REDIS_URL=redis://redis:6379/0
     env_file:
       - .env
     depends_on:
       postgres:
         condition: service_healthy
-      mongodb:
+      redis:
         condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --reload
 
 volumes:
   postgres_data:
-  mongodb_data:
+  redis_data:
 
   web:
     build: .

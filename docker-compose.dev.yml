@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build: 
@@ -12,9 +10,54 @@ services:
     environment:
       - ENVIRONMENT=development
       - PORT=8080
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+asyncpg://opendoge:opendoge123@postgres:5432/opendoge
+      - REDIS_URL=redis://redis:6379/0
+      - POSTGRES_SERVER=postgres
+      - POSTGRES_USER=opendoge
+      - POSTGRES_PASSWORD=opendoge123
+      - POSTGRES_DB=opendoge
+      - POSTGRES_PORT=5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload --root-path /app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
-      retries: 3 
+      retries: 3
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=opendoge
+      - POSTGRES_PASSWORD=opendoge123
+      - POSTGRES_DB=opendoge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opendoge -d opendoge"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data: 
