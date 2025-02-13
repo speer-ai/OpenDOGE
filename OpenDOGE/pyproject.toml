@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "opendoge"
+version = "0.1.0"
+description = "Open source platform for analyzing government spending data"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = ["government", "spending", "analysis", "transparency"]
+authors = [
+    { name = "Nick", email = "nick@example.com" }
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+dependencies = [
+    "fastapi>=0.68.0",
+    "sqlalchemy>=1.4.0",
+    "alembic>=1.7.0",
+    "pydantic>=1.8.0",
+    "aiohttp>=3.8.0",
+    "asyncpg>=0.25.0",
+    "python-dotenv>=0.19.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-asyncio>=0.15.0",
+    "black>=21.5b2",
+    "isort>=5.9.0",
+    "mypy>=0.910",
+    "flake8>=3.9.0",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py38"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 100
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true 

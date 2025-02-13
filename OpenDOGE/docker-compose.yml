@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-opendoge}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-opendoge123}
+      - POSTGRES_DB=${POSTGRES_DB:-opendoge}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-opendoge} -d ${POSTGRES_DB:-opendoge}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=postgres
+      - POSTGRES_USER=${POSTGRES_USER:-opendoge}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-opendoge123}
+      - POSTGRES_DB=${POSTGRES_DB:-opendoge}
+      - POSTGRES_PORT=5432
+      - MONGODB_URL=mongodb://mongodb:27017
+      - MONGODB_DB=${MONGODB_DB:-opendoge}
+      - SAM_API_KEY=${SAM_API_KEY:-}
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --reload
+
+volumes:
+  postgres_data:
+  mongodb_data: 
