@@ -3,25 +3,38 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import usaspending, treasury
+from app.api.v1 import usaspending, treasury, government_data
+from app.core.config import settings
 
-app = FastAPI(title="OpenDOGE", description="Open source platform for analyzing government spending data")
+app = FastAPI(
+    title="OpenDOGE",
+    description="Open Data on Government Expenditure",
+    version="1.0.0"
+)
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Mount static files
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 # Mount templates
 templates = Jinja2Templates(directory="app/templates")
 
 # Include routers
-app.include_router(usaspending.router, prefix="/api/v1")
-app.include_router(treasury.router, prefix="/api/v1")
+app.include_router(usaspending.router, prefix="/api/v1/usaspending", tags=["USAspending"])
+app.include_router(treasury.router, prefix="/api/v1/treasury", tags=["Treasury"])
+app.include_router(
+    government_data.router,
+    prefix="/api/v1/government-data",
+    tags=["Government Data"]
+)
 
 @app.get("/")
 async def root(request: Request):

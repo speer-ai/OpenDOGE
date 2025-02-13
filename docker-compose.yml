@@ -1,18 +1,60 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-opendoge}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-opendoge123}
-      - POSTGRES_DB=${POSTGRES_DB:-opendoge}
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - ENVIRONMENT=production
+      - PORT=8000
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+asyncpg://opendoge:opendoge123@postgres:5432/opendoge
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - web
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=opendoge
+      - POSTGRES_PASSWORD=opendoge123
+      - POSTGRES_DB=opendoge
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-opendoge} -d ${POSTGRES_DB:-opendoge}"]
+      test: ["CMD-SHELL", "pg_isready -U opendoge -d opendoge"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,72 +71,6 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
-    environment:
-      - POSTGRES_SERVER=postgres
-      - POSTGRES_USER=${POSTGRES_USER:-opendoge}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-opendoge123}
-      - POSTGRES_DB=${POSTGRES_DB:-opendoge}
-      - POSTGRES_PORT=5432
-      - REDIS_URL=redis://redis:6379/0
-    env_file:
-      - .env
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --reload
-
 volumes:
   postgres_data:
-  redis_data:
-
-  web:
-    build: .
-    image: opendoge:latest
-    container_name: opendoge_web
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    environment:
-      - ENVIRONMENT=production
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-
-  nginx:
-    image: nginx:alpine
-    container_name: opendoge_nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
-      - ./nginx/logs:/var/log/nginx
-    depends_on:
-      - web
-    healthcheck:
-      test: ["CMD", "nginx", "-t"]
-      interval: 30s
-      timeout: 10s
-      retries: 3 
+  redis_data: 
