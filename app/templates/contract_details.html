@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenDOGE - Contract Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/accounting-js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <h1 class="text-4xl font-bold">
+                <a href="/" class="hover:opacity-90">OpenDOGE</a>
+            </h1>
+            <p class="text-xl opacity-90">Contract Details</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-6">
+        <!-- Contract Overview -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-2" id="contractDescription">Loading...</h2>
+                    <p class="text-4xl font-bold text-blue-600 mb-4" id="contractAmount">Loading...</p>
+                </div>
+                <a href="/" class="text-blue-600 hover:text-blue-800">← Back to Dashboard</a>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Contract Details</h3>
+                    <dl class="space-y-2">
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Award ID:</dt>
+                            <dd class="font-medium" id="awardId">Loading...</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Award Type:</dt>
+                            <dd class="font-medium" id="awardType">Loading...</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Start Date:</dt>
+                            <dd class="font-medium" id="startDate">Loading...</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">End Date:</dt>
+                            <dd class="font-medium" id="endDate">Loading...</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Status:</dt>
+                            <dd class="font-medium" id="status">Loading...</dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Agency Information</h3>
+                    <dl class="space-y-2">
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Awarding Agency:</dt>
+                            <dd class="font-medium" id="awardingAgency">Loading...</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Funding Agency:</dt>
+                            <dd class="font-medium" id="fundingAgency">Loading...</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Sub-Agency:</dt>
+                            <dd class="font-medium" id="subAgency">Loading...</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipient Information -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Recipient Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <dl class="space-y-2">
+                    <div class="flex justify-between">
+                        <dt class="text-gray-600">Recipient Name:</dt>
+                        <dd class="font-medium" id="recipientName">Loading...</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-600">DUNS:</dt>
+                        <dd class="font-medium" id="recipientDuns">Loading...</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-600">Business Type:</dt>
+                        <dd class="font-medium" id="businessType">Loading...</dd>
+                    </div>
+                </dl>
+                <dl class="space-y-2">
+                    <div class="flex justify-between">
+                        <dt class="text-gray-600">Location:</dt>
+                        <dd class="font-medium" id="recipientLocation">Loading...</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-gray-600">Congressional District:</dt>
+                        <dd class="font-medium" id="congressionalDistrict">Loading...</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Additional Details -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Additional Information</h3>
+            <div class="prose max-w-none">
+                <div id="description" class="text-gray-700">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utility functions
+        function formatMoney(amount) {
+            return accounting.formatMoney(amount, "$", 2);
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Load contract details
+        async function loadContractDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const awardId = urlParams.get('id');
+            
+            if (!awardId) {
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/usaspending/awards/${awardId}`);
+                const data = await response.json();
+                
+                // Update basic contract information
+                document.getElementById('contractDescription').textContent = data.description || 'No description available';
+                document.getElementById('contractAmount').textContent = formatMoney(data.amount);
+                document.getElementById('awardId').textContent = data.award_id;
+                document.getElementById('awardType').textContent = data.award_type;
+                document.getElementById('startDate').textContent = formatDate(data.period_of_performance_start_date);
+                document.getElementById('endDate').textContent = formatDate(data.period_of_performance_end_date);
+                document.getElementById('status').textContent = data.status;
+
+                // Update agency information
+                document.getElementById('awardingAgency').textContent = data.awarding_agency_name;
+                document.getElementById('fundingAgency').textContent = data.funding_agency_name;
+                document.getElementById('subAgency').textContent = data.awarding_sub_agency_name;
+
+                // Update recipient information
+                document.getElementById('recipientName').textContent = data.recipient_name;
+                document.getElementById('recipientDuns').textContent = data.recipient_duns;
+                document.getElementById('businessType').textContent = data.recipient_business_type;
+                document.getElementById('recipientLocation').textContent = 
+                    `${data.recipient_city}, ${data.recipient_state} ${data.recipient_zip}`;
+                document.getElementById('congressionalDistrict').textContent = data.recipient_congressional_district;
+
+                // Update description
+                document.getElementById('description').innerHTML = `
+                    <p class="mb-4">${data.description || 'No additional details available.'}</p>
+                    ${data.naics ? `<p class="mb-2"><strong>NAICS Code:</strong> ${data.naics}</p>` : ''}
+                    ${data.psc ? `<p class="mb-2"><strong>PSC Code:</strong> ${data.psc}</p>` : ''}
+                `;
+
+            } catch (error) {
+                console.error('Error loading contract details:', error);
+                // Show error message to user
+                document.getElementById('contractDescription').textContent = 'Error loading contract details';
+            }
+        }
+
+        // Initialize page
+        window.onload = loadContractDetails;
+    </script>
+</body>
+</html> 
