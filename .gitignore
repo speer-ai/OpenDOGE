@@ -88,3 +88,18 @@ dist/
 *.egg-info/
 .DS_Store
 .cursorrules
+
+# SSL
+nginx/ssl/*.key
+nginx/ssl/*.crt
+
+# SSH Keys
+opendoge
+opendoge.pub
+*.pem
+*.key
+id_*
+*.pub
+
+# OS
+Thumbs.db
