@@ -1,5 +1,9 @@
 # OpenDOGE (Open Data on Government Expenditure)
 
+<p align="center">
+  <img src="banner.png" alt="OpenDOGE Banner" width="100%">
+</p>
+
 An open-source platform for analyzing and visualizing government spending data.
 
 ## Features
@@ -78,14 +82,6 @@ isort .
 ```bash
 mypy .
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
 
 ## License
 
