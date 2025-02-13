@@ -27,12 +27,28 @@ class USSpendingClient:
         payload = {
             "page": page,
             "limit": limit,
+            "fields": [
+                "Award ID",
+                "Recipient Name",
+                "Description",
+                "Award Amount",
+                "Start Date",
+                "End Date",
+                "Award Type",
+                "Awarding Agency",
+                "Funding Agency"
+            ],
+            "sort": "Award ID",  # Using a simple, guaranteed field
+            "order": "desc",
+            "subawards": False,
             "filters": {
-                "keywords": [keyword] if keyword else [],
                 "award_type_codes": award_type or [],
                 "time_period": [time_period] if time_period else []
             }
         }
+        
+        if keyword and isinstance(keyword, str):
+            payload["filters"]["keywords"] = [keyword]
         
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -67,24 +83,28 @@ class USSpendingClient:
         page: int = 1,
         limit: int = 100
     ) -> Dict[str, Any]:
-        """
-        Get federal account information
-        """
-        params = {
+        """Get federal account information"""
+        payload = {
+            "filters": {
+                "fy": str(fiscal_year) if fiscal_year else None
+            },
             "page": page,
-            "limit": limit
+            "limit": limit,
+            "sort": {
+                "field": "budgetary_resources",
+                "direction": "desc"
+            }
         }
-        if fiscal_year:
-            params["fiscal_year"] = fiscal_year
             
         async with aiohttp.ClientSession() as session:
-            async with session.get(
+            async with session.post(
                 f"{self.BASE_URL}/federal_accounts/",
                 headers=self.headers,
-                params=params
+                json=payload
             ) as response:
                 if response.status == 200:
-                    return await response.json()
+                    result = await response.json()
+                    return {"data": result.get("results", [])}
                 else:
                     error_text = await response.text()
                     raise Exception(f"USSpending API Error: {error_text}")
@@ -190,15 +210,29 @@ class USSpendingClient:
         fiscal_year: Optional[int] = None
     ) -> Dict[str, Any]:
         """Get spending data for a specific state"""
-        params = {"state_code": state_code}
-        if fiscal_year:
-            params["fiscal_year"] = fiscal_year
+        payload = {
+            "scope": "recipient_location",
+            "geo_layer": "state",
+            "data_type": "obligated_amount",
+            "filters": {
+                "recipient_locations": [{
+                    "country": "USA",
+                    "state": state_code
+                }],
+                "time_period": [
+                    {
+                        "start_date": f"{fiscal_year}-10-01" if fiscal_year else "2024-10-01",
+                        "end_date": f"{fiscal_year + 1}-09-30" if fiscal_year else "2025-09-30"
+                    }
+                ]
+            }
+        }
             
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{self.BASE_URL}/recipient/state/{state_code}/",
+            async with session.post(
+                f"{self.BASE_URL}/search/spending_by_geography/",
                 headers=self.headers,
-                params=params
+                json=payload
             ) as response:
                 if response.status == 200:
                     return await response.json()

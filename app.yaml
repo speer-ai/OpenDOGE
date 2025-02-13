@@ -1,0 +1,25 @@
+name: opendoge
+services:
+- name: web
+  github:
+    branch: main
+    deploy_on_push: true
+  dockerfile_path: Dockerfile
+  source_dir: /
+  http_port: 8080
+  instance_count: 1
+  instance_size_slug: basic-xs
+  routes:
+  - path: /
+  health_check:
+    http_path: /health
+    port: 8080
+    initial_delay_seconds: 10
+    period_seconds: 30
+  envs:
+  - key: ENVIRONMENT
+    value: production
+    scope: RUN_TIME
+  - key: PORT
+    value: "8080"
+    scope: RUN_TIME 
